@@ -11,7 +11,7 @@ class TradingService:
     def __init__(self):
         self.db_path = f"{os.getcwd()}/rapidstock.db"
 
-    def purchase_stock(self, quantity, purchase_price):
+    def purchase_stock(self, quantity, purchase_price, ticker):
         '''Allows a user to purchase a stock
 
         Add a record to the database table `stocks` with the following columns
@@ -30,9 +30,26 @@ class TradingService:
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
 
+            # Write an INSERT INTO statement
+            sql_to_execute = """
+            INSERT INTO Stocks (
+              purchase_date,
+              purchase_type,
+              purchase_price,
+              quantity,
+              ticker_symbol
+            )
+            VALUES ( ?, ?, ?, ?, ? )
+            """
+
+            stock_data = ( datetime.now(), "BUY", purchase_price, quantity, ticker )
+
+            c.execute(sql_to_execute, stock_data)
+            conn.commit()
+
         return None
 
-    def sell_stock(self, quantity, market_price):
+    def sell_stock(self, quantity, market_price, ticker):
         '''Allows a user to sell a stock
 
         Method arguments
@@ -43,6 +60,23 @@ class TradingService:
         with sqlite3.connect(self.db_path) as conn:
             c = conn.cursor()
 
+            # Write an INSERT INTO statement
+            sql_to_execute = """
+            INSERT INTO Stocks (
+              purchase_date,
+              purchase_type,
+              purchase_price,
+              quantity,
+              ticker_symbol
+            )
+            VALUES ( ?, ?, ?, ?, ? )
+            """
+
+            stock_data = ( datetime.now(), "SELL", market_price, quantity, ticker )
+
+            c.execute(sql_to_execute, stock_data)
+            conn.commit()
+
         return None
 
 
@@ -52,6 +86,33 @@ class TradingService:
       Args:
           ticker (str): The ticker symbol for a stock
       """
+      with sqlite3.connect(self.db_path) as conn:
+          conn.row_factory = sqlite3.Row
+          c = conn.cursor()
+
+          # Write an INSERT INTO statement
+          sql_to_execute = """
+          SELECT
+            s.purchase_price,
+            s.quantity,
+            s.purchase_date
+          FROM Stocks s
+          WHERE
+            s.ticker_symbol = ?
+          """
+
+          stock_data = ( ticker, )
+
+          c.execute(sql_to_execute, stock_data)
+          results = c.fetchall()
+
+          all_transactions = []
+          for transaction in results:
+              all_transactions.append(dict(transaction))
+
+          return all_transactions
+
+
 
     def get_portfolio(self):
         '''Get all transactions'''
@@ -66,6 +127,4 @@ class TradingService:
         '''
         pass
 
-
-amz = TradingService()
 
